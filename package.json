@@ -3,31 +3,48 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
-    "react-native-scripts-ts": "1.5.0",
-    "@types/react": "^16.0.5",
-    "@types/react-native": "^0.48.4",
-    "@types/react-test-renderer": "^16.0.0",
-    "jest-expo-ts": "^20.0.0",
-    "react-native-typescript-transformer": "^1.1.4",
-    "react-test-renderer": "^16.0.0",
-    "tslib": "^1.7.1",
-    "typescript": "^2.5.2"
+    "jest-expo": "23.0.0",
+    "react-native-scripts": "1.8.1",
+    "react-native-typescript-transformer": "^1.2.1",
+    "react-test-renderer": "16.0.0",
+    "ts-jest": "^22.0.1"
   },
-  "main": "./node_modules/react-native-scripts-ts/build/bin/crna-entry.js",
+  "main": "./node_modules/react-native-scripts/build/bin/crna-entry.js",
   "scripts": {
-    "start": "react-native-scripts-ts start",
-    "eject": "react-native-scripts-ts eject",
-    "android": "react-native-scripts-ts android",
-    "ios": "react-native-scripts-ts ios",
+    "start": "react-native-scripts start",
+    "eject": "react-native-scripts eject",
+    "android": "react-native-scripts android",
+    "ios": "react-native-scripts ios",
     "test": "node node_modules/jest/bin/jest.js --watch"
   },
   "jest": {
-    "preset": "jest-expo-ts"
+    "preset": "jest-expo",
+    "transform": {
+      "^.+\\.jsx?$": "<rootDir>/node_modules/babel-jest",
+      "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "ios.ts",
+      "ios.tsx",
+      "android.ts",
+      "android.tsx"
+    ]
   },
   "dependencies": {
-    "expo": "^20.0.0",
-    "react": "16.0.0-alpha.12",
-    "react-native": "^0.47.0",
-    "tslint": "^5.9.1"
+    "@types/jest": "^22.0.1",
+    "@types/react": "^16.0.34",
+    "@types/react-native": "^0.51.10",
+    "@types/react-test-renderer": "^16.0.0",
+    "expo": "^23.0.4",
+    "jest": "^22.1.1",
+    "react": "16.0.0",
+    "react-native": "0.50.3",
+    "typescript": "^2.6.2"
   }
 }
