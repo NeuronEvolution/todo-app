@@ -1,21 +1,21 @@
-import { Alert } from 'react-native';
 import { Dispatch } from 'react-redux';
 import { combineReducers } from 'redux';
 import { Dispatchable, StandardAction } from './_common/action';
 import {
-    DefaultApiFactory as AccountApi, login_FAILURE, login_SUCCESS, loginParams,
-    smsCode_FAILURE,
-    smsCode_SUCCESS,
-    smsCodeParams, smsLogin_FAILURE, smsLogin_SUCCESS,
-    smsLoginParams, smsSignup_FAILURE, smsSignup_SUCCESS, smsSignupParams
+    DefaultApiFactory as AccountApi,
+    loginParams,
+    smsCodeParams,
+    smsLoginParams,
+    smsSignupParams
 } from './api/account-private/gen/';
 import {
-    AuthorizationCode, authorize_FAILURE, authorize_SUCCESS,
+    AuthorizationCode,
     DefaultApiFactory as OauthPrivateApi
 } from './api/oauth-private/gen/';
 import {
-    DefaultApiFactory as UserPrivateApi, oauthJump_FAILURE, oauthJump_SUCCESS, OauthJumpResponse, oauthState_FAILURE,
-    oauthState_SUCCESS
+    DefaultApiFactory as UserPrivateApi,
+    oauthJump_SUCCESS,
+    OauthJumpResponse,
 } from './api/user-private/gen';
 
 const accountApi = AccountApi(undefined, undefined, 'http://127.0.0.1:8083/api-private/v1/accounts');
@@ -30,37 +30,54 @@ export interface ToastInfo {
 const GLOBAL_TOAST_ACTION = 'GLOBAL_TOAST_ACTION';
 
 export interface RootState {
-    apiError: string;
     globalToast: ToastInfo;
     oauthJumpResponse: OauthJumpResponse;
+}
+
+export function onGlobalToast(text: string): Dispatchable {
+    return (dispatch: Dispatch<StandardAction>) => {
+        dispatch({
+            type: GLOBAL_TOAST_ACTION,
+            payload: {
+                text,
+                timestamp: new Date()
+            }
+        });
+    };
+}
+
+function onApiError(err: any): Dispatchable {
+    return (dispatch: Dispatch<StandardAction>) => {
+        let text = err.toString();
+        if (text === 'TypeError: Network request failed') {
+            text = '网络连接失败';
+        }
+
+        dispatch(onGlobalToast(text));
+    };
 }
 
 function  onAccountLoginSuccess(jwt: string): Dispatchable {
     return (dispatch: Dispatch<StandardAction>) => {
         return userPrivateApi.oauthState('fromApp')
             .then((state: string) => {
-                dispatch({type: oauthState_SUCCESS, payload: state});
                 return oauthPrivateApi.authorize(jwt, 'code', '100002', 'fromApp', 'BASIC', state)
                     .then((authorizationCode: AuthorizationCode) => {
                         if (authorizationCode.code === undefined) {
-                            return dispatch({type: authorize_FAILURE, error: true, payload: 'code is null'});
+                            return dispatch(onApiError('code is null'));
                         }
-                        dispatch({type: authorize_SUCCESS, payload: authorizationCode});
                         userPrivateApi.oauthJump('fromApp', authorizationCode.code, state)
                             .then((oauthJumpResponseData: OauthJumpResponse) => {
                                 dispatch({type: oauthJump_SUCCESS, payload: oauthJumpResponseData});
-                                dispatch({
-                                    type: GLOBAL_TOAST_ACTION,
-                                    payload: {text: '登录成功', timestamp: new Date()}
-                                });
+                                dispatch(onGlobalToast('登录成功'));
                             }).catch((err) => {
-                            dispatch({type: oauthJump_FAILURE, error: true, payload: err});
+                            dispatch(onApiError(err));
                         });
                     }).catch((err) => {
-                        dispatch({type: authorize_FAILURE, error: true, payload: err});
+                        dispatch(onApiError(err));
                     });
             }).catch((err) => {
-                dispatch({type: oauthState_FAILURE, error: true, payload: err});
+                dispatch(onApiError(err));
             });
     };
 }
@@ -69,13 +86,9 @@ export function apiAccountSmsCode(p: smsCodeParams): Dispatchable {
     return (dispatch: Dispatch<StandardAction>) => {
         return accountApi.smsCode(p.scene, p.phone, p.captchaId, p.captchaCode)
             .then(() => {
-                dispatch({type: smsCode_SUCCESS});
-                dispatch({
-                    type: GLOBAL_TOAST_ACTION,
-                    payload: {text: '已发送', timestamp: new Date()}
-                });
+                dispatch(onGlobalToast('已发送'));
             }).catch((err) => {
-                dispatch({type: smsCode_FAILURE, error: true, payload: err});
+                dispatch(onApiError(err));
             });
     };
 }
@@ -84,10 +97,9 @@ export function apiAccountSmsLogin(p: smsLoginParams): Dispatchable {
     return (dispatch: Dispatch<StandardAction>) => {
         return accountApi.smsLogin(p.phone, p.smsCode)
             .then((jwt: string) => {
-                dispatch({type: smsLogin_SUCCESS, payload: jwt});
                 dispatch(onAccountLoginSuccess(jwt));
             }).catch((err) => {
-                dispatch({type: smsLogin_FAILURE, error: true, payload: err});
+                dispatch(onApiError(err));
             });
     };
 }
@@ -96,10 +108,9 @@ export function apiAccountLogin(p: loginParams): Dispatchable {
     return (dispatch: Dispatch<StandardAction>) => {
         return accountApi.login(p.name, p.password)
             .then((jwt: string) => {
-                dispatch({type: login_SUCCESS, payload: jwt});
                 dispatch(onAccountLoginSuccess(jwt));
             }).catch((err) => {
-                dispatch({type: login_FAILURE, error: true, payload: err});
+                dispatch(onApiError(err));
             });
     };
 }
@@ -108,11 +119,10 @@ export function apiAccountSmsSignup(p: smsSignupParams): Dispatchable {
     return (dispatch: Dispatch<StandardAction>) => {
         return accountApi.smsSignup(p.phone, p.smsCode, p.password)
             .then((jwt: string) => {
-                dispatch({type: smsSignup_SUCCESS, payload: jwt});
                 dispatch(onAccountLoginSuccess(jwt));
             })
             .catch((err) => {
-                dispatch({type: smsSignup_FAILURE, error: true, payload: err});
+                dispatch(onApiError(err));
             });
     };
 }
@@ -125,25 +135,6 @@ function globalToast(state: ToastInfo, action: StandardAction): ToastInfo {
     switch (action.type) {
         case GLOBAL_TOAST_ACTION:
             return action.payload;
-        default:
-            return state;
-    }
-}
-
-function apiError(state: string, action: StandardAction): string {
-    if (state === undefined) {
-        return '';
-    }
-
-    switch (action.type) {
-        case login_FAILURE:
-        case smsCode_FAILURE:
-        case smsLogin_FAILURE:
-        case oauthState_FAILURE:
-        case authorize_FAILURE:
-        case oauthJump_FAILURE:
-            Alert.alert('请求失败', action.payload === undefined ? '' : action.payload.toString());
-            return action.payload === undefined ? '' : JSON.stringify(action.payload);
         default:
             return state;
     }
@@ -163,7 +154,6 @@ function oauthJumpResponse(state: OauthJumpResponse, action: StandardAction): Oa
 }
 
 export const rootReducer = combineReducers({
-    apiError,
     globalToast,
     oauthJumpResponse
 });

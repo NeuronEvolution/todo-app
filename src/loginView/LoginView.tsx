@@ -3,11 +3,15 @@ import { Alert, Button, Dimensions, Text, TextInput, View } from 'react-native';
 import { connect } from 'react-redux';
 import { Dispatchable } from '../_common/action';
 import { loginParams, smsCodeParams, smsLoginParams, smsSignupParams } from '../api/account-private/gen';
-import { apiAccountLogin, apiAccountSmsCode, apiAccountSmsLogin, apiAccountSmsSignup, RootState } from '../redux';
+import {
+    apiAccountLogin, apiAccountSmsCode, apiAccountSmsLogin, apiAccountSmsSignup, onGlobalToast,
+    RootState
+} from '../redux';
 
 export interface Props {
     rootState: RootState;
 
+    onGlobalToast: (text: string) => Dispatchable;
     apiAccountLogin: (p: loginParams) => Dispatchable;
     apiAccountSmsCode: (p: smsCodeParams) => Dispatchable;
     apiAccountSmsLogin: (p: smsLoginParams) => Dispatchable;
@@ -207,7 +211,7 @@ class LoginView extends React.Component<Props, State> {
 
     private onSmsLoginGetSmsCodePressed(): any {
         if (this.state.loginPhone === '') {
-            return Alert.alert('请输入手机号');
+            return this.props.onGlobalToast('请输入手机号');
         }
 
         this.props.apiAccountSmsCode({
@@ -219,11 +223,11 @@ class LoginView extends React.Component<Props, State> {
     private onLoginPressed(): any {
         if (this.state.tabIndex === 0) {
             if (this.state.loginName === '') {
-                return Alert.alert('请输入帐号');
+                return this.props.onGlobalToast('请输入帐号');
             }
 
             if (this.state.loginPassword === '') {
-                return Alert.alert('请输入密码');
+                return this.props.onGlobalToast('请输入密码');
             }
 
             this.props.apiAccountLogin({
@@ -232,11 +236,11 @@ class LoginView extends React.Component<Props, State> {
             });
         } else {
             if (this.state.loginPhone === '') {
-                return Alert.alert('请输入手机号');
+                return this.props.onGlobalToast('请输入手机号');
             }
 
             if (this.state.loginSmsCode === '') {
-                return Alert.alert('请输入验证码');
+                return this.props.onGlobalToast('请输入验证码');
             }
 
             this.props.apiAccountSmsLogin({
@@ -248,6 +252,7 @@ class LoginView extends React.Component<Props, State> {
 }
 
 export default connect((state: RootState) => ({rootState: state}), {
+    onGlobalToast,
     apiAccountLogin,
     apiAccountSmsCode,
     apiAccountSmsLogin,
