@@ -1,23 +1,19 @@
-import { StyleSheet, Text, View } from 'react-native';
 import * as React from 'react';
+import { Provider } from 'react-redux';
+import { applyMiddleware, createStore } from 'redux';
+import logger from 'redux-logger';
+import thunk from 'redux-thunk';
+import { rootReducer } from './src/redux';
+import RootView from './src/RootView';
+
+const store = createStore(rootReducer, {}, applyMiddleware(thunk, logger));
 
 export default class App extends React.Component {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text>Open up App.js to start working on your app!</Text>
-        <Text>Changes you make will automatically reload.</Text>
-        <Text>Shake your phone to open the developer menu.</Text>
-      </View>
-    );
-  }
+    public render() {
+        return (
+            <Provider store={store}>
+                <RootView/>
+            </Provider>
+        );
+    }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
